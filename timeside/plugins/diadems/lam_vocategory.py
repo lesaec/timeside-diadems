@@ -90,10 +90,11 @@ class LAMVocategory(Analyzer):
 
   @frames_adapter
   def process(self, frames, eod=False):
+    """print "début process"
+    print "fin process" """
     return frames, eod
 
   def post_process(self):
-
     ## ARGUMENTS
     ##     fileName : name with  extension of the audio file (can be .wav, .mp3, .ogg, ...)
     ##     step_sec : step window length to compite the duration distribution of the partials (sec)
@@ -123,8 +124,7 @@ class LAMVocategory(Analyzer):
     ##                - learnedData_descriptorValues_dureeMax=10sec_Nfft2=150ms_2015-07-02-16h_5classes.tab
     ##                - learnedData_descriptorValues_dureeMax=10sec_Nfft2=150ms_2015-07-02-16h_6classes.tab
 
-
-    
+    print "début post_process"
     ##### Path and files to be processed
     nomFichier = self.mediainfo()['uri'].split('file://')[-1]
     print "nomFichier=", nomFichier
@@ -207,7 +207,7 @@ class LAMVocategory(Analyzer):
     ## Initialization        
     NoteDurationRange=[] # contains all the ranges of partial duration of a same category
     Npeak=[]
-    MeanPeakWidth=[]  
+    MeanPeakWidth=[]
     
     if len(audio_full) < len(range(duree2*fs)):
         print("Audio signal must be more than 10sec")
@@ -234,39 +234,57 @@ class LAMVocategory(Analyzer):
     
     step2= int(step2_sec *fs) # for FFT computation
     Nfft2=int(Nfft2_sec*fs)
-    
-    
-    Pxx, freqs, bins, im = pylab.specgram(audio,Fs=fs,window=np.hamming(Nfft2),NFFT=Nfft2,noverlap=Nfft2-step2,pad_to=Nzeropad,xextent=[deb,deb+duree])
-    
-    # We extract the spectrogram frequency area we want to study
-    Pxx_ssmat=Pxx[ fmin*Nzeropad/fs : fmax*Nzeropad/fs , : ].copy() # Spectro submatrix corresponding to fmin:fmax
-    
-    
-    
-    ## from linear scale to log2 scale        
-    LPxxss=len(Pxx_ssmat[:,0])      
-                # Number of elements along the frequency dimension (corresponding to fmin to fmax)fmax) 
-    vectlin=range(LPxxss)                 
-                # (0,2,...,LPxxss-1) with LPxxss elements
-    temp3=np.asarray(vectlin)+1                     
-                # (1,2,...,LPxxss) with LPxxss elements
-    temp4=temp3*(fmax-fmin)/(LPxxss-1)+(LPxxss*fmin-fmax)/(LPxxss-1)  
-                # (fmin, ... fmax) with LPxxss elements (through a linear function)
-    vectlog2=12*np.log2(temp4/fmin)               
-                # moving to a semitone scale with fmin/2 as  reference
-    NperOct =  int( LPxxss/(2**Noctaves-1)      )  
-                #  Number of elements of Pxx_ssmat in the first octave, to be taken as reference (as it limits the other octaves)lui qui limite les autres)
-                # approximation : moving to inferior integer 
-    new_length =  int( Noctaves * LPxxss / (2**Noctaves-1)      )             
-                # New length to be wanted in the interpolation outlet; Number of octaves * element number in the first octave
-                # approximation : moving to inferior integer 
-    new_vectlog2 = np.linspace(vectlog2[0],vectlog2[-1], new_length)
-                # vector starting and finishing by the same values than the log2 vector “vectlog2“, and having “new_length“ as dimension
-    Pxx_st=np.zeros((new_length, len(Pxx_ssmat[0,:])))
-    
+
+
+    pos = 0
+    nseg = 0
+    while (pos + Nfft2) < len(audio):
+        pos = pos + step2
+        nseg = nseg + 1
+    LPxxss = len(np.arange(fmin * Nzeropad / fs, fmax * Nzeropad / fs))
+    #print "LPxxss =", LPxxss
+
+    vectlin = range(LPxxss)
+    # (0,1,...,LPxxss-1) with LPxxss elements
+
+    temp3 = np.asarray(vectlin) + 1
+    # (1,2,...,LPxxss) with LPxxss elements
+    temp4 = temp3 * (fmax - fmin) / (LPxxss - 1) + (LPxxss * fmin - fmax) / (LPxxss - 1)
+    # (fmin, ... fmax) with LPxxss elements (through a linear function)
+    vectlog2 = 12 * np.log2(temp4 / fmin)
+    # moving to a semitone scale with fmin/2 as  reference
+    NperOct = int(LPxxss / (2 ** Noctaves - 1))
+    #  Number of elements of Pxx_ssmat in the first octave, to be taken as reference (as it limits the other octaves)lui qui limite les autres)
+    # approximation : moving to inferior integer
+    new_length = int(Noctaves * LPxxss / (2 ** Noctaves - 1))
+    # New length to be wanted in the interpolation outlet; Number of octaves * element number in the first octave
+    # approximation : moving to inferior integer
+    new_vectlog2 = np.linspace(vectlog2[0], vectlog2[-1], new_length)
+    # vector starting and finishing by the same values than the log2 vector “vectlog2“, and having “new_length“ as dimension
+    Pxx_st = np.zeros((new_length, nseg))
+
     Lspectro=len(Pxx_st[0,:])
-    for kk in range(Lspectro):              # Interpolation on frequency dimension, over each time bin
-        Pxx_st[:,kk] = sp.interpolate.interp1d(vectlog2,Pxx_ssmat[:,kk], kind='slinear')(new_vectlog2)
+
+    p = 0
+    kk = 0
+    h = np.hamming(Nfft2)
+    while kk < Nfft2 :
+        p = p + abs(h[kk])**2
+        kk = kk + 1
+
+    #p = np.sum(np.hamming(Nfft2))
+    pos = 0
+    p = 2 / fs / p
+    kk = 0
+    while (pos+Nfft2) < len(audio):
+        s = np.zeros(Nzeropad)
+        w = audio[pos:pos+Nfft2] * np.hamming(Nfft2)
+        s[0:Nfft2] = w
+        m = p * (abs(np.fft.rfft(s, Nzeropad)[0:Nzeropad/2])**2) [fmin * Nzeropad / fs: fmax * Nzeropad / fs]
+
+        pos = pos + step2
+
+        Pxx_st[:,kk] = sp.interpolate.interp1d(vectlog2, m, kind='slinear')(new_vectlog2)
         	# https://docs.scipy.org/doc/scipy-0.10.1/reference/generated/scipy.interpolate.interp1d.html
         	# Pxx_ssmat[:,kk] has its elements accordingly to frequency vector ‘vectlog2’
         	# and we want to interpolate Pxx_ssmat[:,kk] in order to get a new vector,   Pxx_st[:,kk] , whose elements feats with a frequency vector for which values are uniformely spead (constant sample period), contrary to Pxx_ssmat[:,kk]]
@@ -274,47 +292,46 @@ class LAMVocategory(Analyzer):
     
     
         ## Accumulation by octave
-    chromagram=np.zeros((NperOct,Pxx_st.shape[1])) # Matrix with matrice avec une octave en fréquence de LPxxss/Noctaves points
-    for NumOct in range(1,Noctaves+1): 
-		# (from 1 to Noctaves included)
-        chromagram = chromagram + Pxx_st[np.floor((NumOct-1) * LPxxss / (2**Noctaves-1)):np.floor((NumOct-1) * LPxxss / (2**Noctaves-1)) + NperOct,: ] 
-		# Each octave is cumulated
-    chromagram=chromagram/Noctaves 
+        chromagram=np.zeros((NperOct,Pxx_st.shape[1])) # Matrix with matrice avec une octave en fréquence de LPxxss/Noctaves points
+        for NumOct in range(1,Noctaves+1):
+		   # (from 1 to Noctaves included)
+           chromagram = chromagram + Pxx_st[np.floor((NumOct-1) * LPxxss / (2**Noctaves-1)):np.floor((NumOct-1) * LPxxss / (2**Noctaves-1)) + NperOct,: ]
+		   # Each octave is cumulated
+        chromagram=chromagram/Noctaves
 		# normalisation by octave number, after being cumulated
     
-    spectrotop=chromagram.copy()     
-          
-    
-    
+        spectrotop=chromagram.copy()
+
+        kk = kk + 1
+
     ## Computing length distribution of partials
-    print '*** Computing length distribution o…’f partials       
-                
+    print '*** Computing length distribution of partials'
+
     seuilBruitFond=np.mean(Pxx_st)*coeffSeuilBruitFond
-	        # Minimal threshold on background noise
-    Pxx_st_sansPied_temp=np.zeros_like(Pxx_st)        
-    LargeurPic2 = 3 
+	# Minimal threshold on background noise
+    Pxx_st_sansPied_temp=np.zeros_like(Pxx_st)
+    LargeurPic2 = 3
                 # ( 4/Nzeropad * Nzeropad/2 = 2 for the width of the main lobe of the Hann window, 6/Nzeropad --> 3 if the 2 secondary lobes are included)
                 # cover the expected width of peaks of interest 
                 # detection width corresponds to 1 semitone
-    #LargeurPic2_v= np.ones( Lspectro )*LargeurPic2              
+                #LargeurPic2_v= np.ones( Lspectro )*LargeurPic2
     
     for kkk in range(len(Pxx_st_sansPied_temp[0,:])):
         #pipic = spsignal.find_peaks_cwt( Pxx_st[kk,:], LargeurPic2_v  )
-        seuilNRJ=  np.max([np.mean(Pxx_st[:,kkk])*coeffSeuilNRJ,seuilBruitFond]) 
+        seuilNRJ=  np.max([np.mean(Pxx_st[:,kkk])*coeffSeuilNRJ,seuilBruitFond])
         pipicIndex= peakutils.indexes(Pxx_st[:,kkk],thres=seuilNRJ,min_dist=LargeurPic2)
         
         for kk in range(len(pipicIndex)):
-            if Pxx_st[pipicIndex[kk],kkk]>  seuilNRJ: 
-		# it removes all the small peaks (but it is not the ‘thres’ parameter of the peakutils function)
+            if Pxx_st[pipicIndex[kk],kkk]>  seuilNRJ:
+		    # it removes all the small peaks (but it is not the ‘thres’ parameter of the peakutils function)
                 Pxx_st_sansPied_temp[pipicIndex[kk],kkk]=   Pxx_st[pipicIndex[kk],kkk]
     
     del pipicIndex
     
     Pxx_st_sansPied2=scipy.ndimage.binary_closing(Pxx_st_sansPied_temp,structure=np.ones((1,3)) ).astype(np.int)#,iterations=2)
     Pxx_st_sansPied = scipy.ndimage.binary_opening(Pxx_st_sansPied2,structure=np.ones((1,3)) ).astype(Pxx_st_sansPied2.dtype) # ,structure=np.ones((1,len(Pxx_st_sansPied[0,:]) ) ).astype(Pxx_st_sansPied.dtype))
-                # allow to remove all the holes and small spots of the structure dimension
+    # allow to remove all the holes and small spots of the structure dimension
     
-                      
     ## Distribution of the duration of partials (in sample) in the space pitch-time
     #print '   ... Duration distribution of partials in pitch-time space'
     LongueurNotesEspace=np.zeros_like(Pxx_st_sansPied)
@@ -526,7 +543,6 @@ class LAMVocategory(Analyzer):
     
     ## Cleaning
     if debug==0:
-        del Pxx,  Pxx_ssmat
         del LongueurNotesEspace, LongueurNotesEspace2, LongueurNotesEspace3, LongueurNotesEspace3bis
     
     
@@ -957,7 +973,7 @@ class LAMVocategory(Analyzer):
 
     if os.path.isfile(dataFileName) :
             os.remove(dataFileName)
-
+    print "fin post_process"
     return
     
     ####################################################################################################    
