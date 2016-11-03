@@ -124,10 +124,9 @@ class LAMVocategory(Analyzer):
     ##                - learnedData_descriptorValues_dureeMax=10sec_Nfft2=150ms_2015-07-02-16h_5classes.tab
     ##                - learnedData_descriptorValues_dureeMax=10sec_Nfft2=150ms_2015-07-02-16h_6classes.tab
 
-    print "début post_process"
+    """print "début post_process" """
     ##### Path and files to be processed
     nomFichier = self.mediainfo()['uri'].split('file://')[-1]
-    print "nomFichier=", nomFichier
     
     figname_AvcExt = os.path.basename(nomFichier)
     figname= os.path.splitext(figname_AvcExt)[0]
@@ -305,12 +304,8 @@ class LAMVocategory(Analyzer):
         kk = kk + 1
 
     ## Computing length distribution of partials
-    print '*** Computing length distribution of partials'
-<<<<<<< HEAD
+    """ print '*** Computing length distribution of partials' """
 
-=======
-                    
->>>>>>> 65b7b0521a5109c87728505082402cde60acdc45
     seuilBruitFond=np.mean(Pxx_st)*coeffSeuilBruitFond
 	# Minimal threshold on background noise
     Pxx_st_sansPied_temp=np.zeros_like(Pxx_st)
@@ -351,13 +346,13 @@ class LAMVocategory(Analyzer):
         
     for kk in range( len(LongueurNotesEspace[:,0]) - note_delta): 
             	# for each frequency bin  (it is stopped at end-note_STdelta in order not to go out from the max index of the below matrix)
-        if kk%100==0:  # just for displying on terminal
+        """if kk%100==0:  # just for displying on terminal
             if kk==0:
                 print  '   ... Detecting partials (a. u.): ', str(int(kk/100)),'/',str(int((len(LongueurNotesEspace[:,0]) - note_delta)/100))
 		# affichage tous les 100 itérations
             else:
                 print  '                                                  ', str(int(kk/100)),'/',str(int((len(LongueurNotesEspace[:,0]) - note_delta)/100))
-		# displaying every 100 iterations
+		# displaying every 100 iterations """
 
         dureeNote=0 
 		# in number of samples
@@ -410,12 +405,12 @@ class LAMVocategory(Analyzer):
         kk=0
         noteCenter_m=[]
         
-        if kkk%1000==0:  # just to wait patiently :)
+        """if kkk%1000==0:  # just to wait patiently :)
             if kkk==0:
                 print  '   ... Grouping note process n°1  (a. u.): ', str(int(kkk/1000)),'/',str(int(len(LongueurNotesEspace[0,:])/1000))# affichage tous les 100 itérations
             else:
                 print  '                                                                     ', str(int(kkk/1000)),'/',str(int(len(LongueurNotesEspace[0,:])/1000))
-		# displaying every 100 iterations
+		# displaying every 100 iterations """
 
     
         while jacki==1:                
@@ -465,12 +460,12 @@ class LAMVocategory(Analyzer):
     ## space of duration of partials, located in the matrix at their start position —> space of duration of partials, located in the matrix at their end position
     for kk in range(len(LongueurNotesEspace[:,0])): # For each frequency bin
  
-        if kk%100==0:  # just to wait patiently
+        """if kk%100==0:  # just to wait patiently
             if kk==0:
                 print  '   ... Grouping note process n°2  (a. u.): ', str(int(kk/100)),'/',str(int(len(LongueurNotesEspace[:,0])/100))# affichage tous les 100 itérations
             else:
                 print  '                                                                      ', str(int(kk/100)),'/',str(int(len(LongueurNotesEspace[:,0])/100))# affichage tous les 100 itérations
-
+            """
         for kkk in range(len(LongueurNotesEspace[0,:])): # Pour chaque tranche temporelle
             if kkk+LongueurNotesEspace2[kk,kkk]-1< len(LongueurNotesEspace3[0,:]) and LongueurNotesEspace2[kk,kkk] != 0 :
                 LongueurNotesEspace3[kk,kkk+LongueurNotesEspace2[kk,kkk]-1]=LongueurNotesEspace2[kk,kkk]
@@ -481,12 +476,12 @@ class LAMVocategory(Analyzer):
         kk=0
         noteCenter_m=[]
     
-        if kkk%1000==0: # just to wait patiently
+        """if kkk%1000==0: # just to wait patiently
             if kkk==0:
                 print  '   ... Grouping note process n°3  (a. u.): ', str(int(kkk/1000)),'/',str(int(len(LongueurNotesEspace[0,:])/1000))# affichage tous les 100 itérations
             else:
                 print  '                                                                      ', str(int(kkk/1000)),'/',str(int(len(LongueurNotesEspace[0,:])/1000))# affichage tous les 100 itérations
-
+            """
     
         
         while jacki==1:                
@@ -531,12 +526,12 @@ class LAMVocategory(Analyzer):
     ## Back to the space where partials are located by their end position in the matrix
     for kk in range(len(LongueurNotesEspace3bis[:,0])): # for each freq bin
 
-        if kk%100==0:  # just to wait patiently
+        """if kk%100==0:  # just to wait patiently
             if kk==0:
                 print  '   ... Grouping note process n°4  (a. u.): ', str(int(kk/100)),'/',str(int(len(LongueurNotesEspace[:,0])/100))# affichage tous les 100 itérations
             else:
                 print  '                                                                      ', str(int(kk/100)),'/',str(int(len(LongueurNotesEspace[:,0])/100))# affichage tous les 100 itérations
-
+            """
 
         for kkk in range(len(LongueurNotesEspace3bis[0,:])): # Pour chaque tranche temporelle
             if kkk+LongueurNotesEspace3bis[kk,kkk]-1< len(LongueurNotesEspace3ter[0,:]) and LongueurNotesEspace3bis[kk,kkk] != 0 :
@@ -580,7 +575,7 @@ class LAMVocategory(Analyzer):
                      
     print '*** Processing audio part... 0 /',   int(NpartAudio)
     for l in np.arange(NpartAudio):
-        if NpartAudio<10:
+        """if NpartAudio<10:
             print '                                                    ', int(l+1),'/', int(NpartAudio)
         elif NpartAudio<20:
             if l%2==0:
@@ -593,7 +588,7 @@ class LAMVocategory(Analyzer):
                 print '                                                 ',int(l+1),'/', int(NpartAudio)
         else:  
             if l%16==0:
-                print '                                                 ',int(l+1),'/', int(NpartAudio)
+                print '                                                 ',int(l+1),'/', int(NpartAudio)"""
 
         ii=ii+1  
 
@@ -977,7 +972,7 @@ class LAMVocategory(Analyzer):
 
     if os.path.isfile(dataFileName) :
             os.remove(dataFileName)
-    print "fin post_process"
+    """print "fin post_process" """
     return
     
     ####################################################################################################    
