@@ -227,7 +227,7 @@ class LAMVocategory(Analyzer):
     
     
     #### Chromagram
-    print ('*** Computing Chromagram... fmin=%i Hz,  fmax=%i Hz (%i octaves)' %(fmin,fmax,Noctaves))
+    """ print ('*** Computing Chromagram... fmin=%i Hz,  fmax=%i Hz (%i octaves)' %(fmin,fmax,Noctaves)) """
     #print("    Nfft pour chroma = %.2e sec" %Nfft2_sec)
     #print("    ZeroPad pour chroma = %.2e sec" %(Nzeropad/fs))
     
@@ -555,7 +555,7 @@ class LAMVocategory(Analyzer):
                     margo=1
                     ParUniDur+=1 # Total duration of the projection of the partials on the temporal axis
                 kk+=1
-        print '       Note Partials take ', str(ParUniDur/Lspectro*100),' % of the audio file length'
+        """print '       Note Partials take ', str(ParUniDur/Lspectro*100),' % of the audio file length' """
                      
                      
                      
@@ -573,7 +573,7 @@ class LAMVocategory(Analyzer):
                         
                      
                      
-    print '*** Processing audio part... 0 /',   int(NpartAudio)
+    """print '*** Processing audio part... 0 /',   int(NpartAudio)"""
     for l in np.arange(NpartAudio):
         """if NpartAudio<10:
             print '                                                    ', int(l+1),'/', int(NpartAudio)
